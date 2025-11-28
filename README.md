@@ -25,12 +25,18 @@ git clone https://github.com/Awnishprasad99/My-two-tier-application.git
 cd My-two-tier-application
 ```
 
-2. Build and run the containers:
+2. Create the environment file:
+```bash
+cp .env.example .env
+# Edit .env and set secure passwords
+```
+
+3. Build and run the containers:
 ```bash
 docker-compose up --build
 ```
 
-3. Access the application at [http://localhost:5000](http://localhost:5000)
+4. Access the application at [http://localhost:5000](http://localhost:5000)
 
 ## Services
 
@@ -63,6 +69,7 @@ docker-compose down -v
 ├── Dockerfile          # Docker image for Flask app
 ├── docker-compose.yml  # Docker Compose configuration
 ├── requirements.txt    # Python dependencies
+├── .env.example        # Environment variables template
 ├── templates/
 │   └── index.html      # HTML template
 └── README.md           # This file

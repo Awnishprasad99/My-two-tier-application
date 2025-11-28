@@ -16,3 +16,6 @@ venv/
 
 # Docker
 *.log
+
+# Environment files (keep .env.example)
+.env

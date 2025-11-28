@@ -4,26 +4,36 @@ This serves as the application tier that connects to a MySQL database.
 """
 
 import os
+import time
+import logging
 from flask import Flask, render_template, request, redirect, url_for
 import mysql.connector
 from mysql.connector import Error
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
 
 
-def get_db_connection():
-    """Create a database connection."""
-    try:
-        connection = mysql.connector.connect(
-            host=os.environ.get('MYSQL_HOST', 'db'),
-            database=os.environ.get('MYSQL_DATABASE', 'myapp'),
-            user=os.environ.get('MYSQL_USER', 'root'),
-            password=os.environ.get('MYSQL_PASSWORD', 'rootpassword')
-        )
-        return connection
-    except Error as e:
-        print(f"Error connecting to MySQL: {e}")
-        return None
+def get_db_connection(retries=5, delay=5):
+    """Create a database connection with retry logic."""
+    for attempt in range(retries):
+        try:
+            connection = mysql.connector.connect(
+                host=os.environ.get('MYSQL_HOST', 'db'),
+                database=os.environ.get('MYSQL_DATABASE', 'myapp'),
+                user=os.environ.get('MYSQL_USER', 'root'),
+                password=os.environ.get('MYSQL_PASSWORD', 'rootpassword')
+            )
+            return connection
+        except Error as e:
+            logger.warning(f"Database connection attempt {attempt + 1}/{retries} failed: {e}")
+            if attempt < retries - 1:
+                time.sleep(delay)
+    logger.error("Failed to connect to database after all retries")
+    return None
 
 
 def init_db():
@@ -42,8 +52,9 @@ def init_db():
             connection.commit()
             cursor.close()
             connection.close()
+            logger.info("Database initialized successfully")
         except Error as e:
-            print(f"Error initializing database: {e}")
+            logger.error(f"Error initializing database: {e}")
 
 
 @app.route('/')
@@ -59,7 +70,7 @@ def index():
             cursor.close()
             connection.close()
         except Error as e:
-            print(f"Error fetching messages: {e}")
+            logger.error(f"Error fetching messages: {e}")
     return render_template('index.html', messages=messages)
 
 
@@ -77,7 +88,7 @@ def add_message():
                 cursor.close()
                 connection.close()
             except Error as e:
-                print(f"Error adding message: {e}")
+                logger.error(f"Error adding message: {e}")
     return redirect(url_for('index'))
 
 
